@@ -1,0 +1,17 @@
+{{- if .Values.db.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.db.app }}
+spec:
+  type: NodePort # todo susta
+  ports:
+  - name: http
+    port: {{ .Values.db.port }}
+    targetPort: {{ .Values.db.port }}
+    nodePort: 30306 # todo susta
+  selector:
+    app: {{ .Values.db.app }}
+{{- end }}
+
+

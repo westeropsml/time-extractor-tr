@@ -1,0 +1,66 @@
+{{- if .Values.db.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.db.app }}
+spec:
+  replicas: {{ $.Values.db.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.db.app }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.db.app }}
+    spec:
+      containers:
+        - name: {{ .Values.db.app }}
+          image: {{ .Values.db.image }}
+          {{- if and $.Values.db.command }}
+          command: 
+          {{- range $.Values.db.command }}
+           - {{ . }}
+          {{- end }}
+          {{- end }}
+          volumeMounts:
+          {{- if and $.Values.db.volumeMounts }}
+          {{- range $key, $value := .Values.db.volumeMounts }}
+            - name: "{{ $key }}"
+              mountPath: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          #envFrom:
+          #- configMapRef:
+          #    name: {{ .Values.db.configMapName }}
+          env:
+          {{- if .Values.db.env }}
+          {{- range $key, $value := .Values.db.env }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.db.resources | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.db.port }}
+              protocol: TCP
+      {{- if and $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $.Values.global.imagePullSecrets }}
+        - name: {{ . }}
+      {{- end }}
+      {{- end }}
+      {{- if and $.Values.db.volumes }}
+      volumes:
+      {{- range $.Values.db.volumes }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .persistentVolumeClaim.claimName }}
+      {{- end }}
+      {{- end }}
+      restartPolicy: Always
+{{- end }}
+

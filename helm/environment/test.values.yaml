@@ -1,0 +1,76 @@
+nameOverride: ""
+fullnameOverride: ""
+
+chartVersion: ""
+releaseName: "dws-library"
+targetNamespace: "default"
+chartName: "dws-library"
+
+global:
+  imagePullSecrets:
+    - registry-westerops
+
+  ingress:
+    enabled: true
+    class:
+    domain: westerops.com
+    sslRedirect: true
+ 
+certs:
+  managed: true
+  issuerName: letsencrypt-prod
+
+dws_library:
+  enabled: true
+  replicas: 1
+  #nameSuffix: backend
+  hostPrefix: dwslibrary
+  app: dws-library
+  port: 8000
+  image:  registry.docker.dev.westerops.com/dws-library:vIMAGE_TAG
+  env:
+    POSTGRES_USER: wops
+    POSTGRES_PASSWORD: wops@2022
+    POSTGRES_DB: db-time-extractor
+    
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 100Mi
+      cpu: 50m
+      
+
+db:
+  enabled: enable
+  replicas: 1
+  #nameSuffix: backend
+  hostPrefix: dws-library-db
+  app: ws-library-db
+  port: 5432
+  image:  postgres:14
+  env:
+    POSTGRES_USER: wops
+    POSTGRES_PASSWORD: wops@2022
+    POSTGRES_DB: db-time-extractor
+  volumeMounts: 
+    data: "/var/lib/postgresql/data"
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: dws-library-db-pvc
+  resources:
+    limits:
+      memory: 1Gi
+      cpu: 500m
+    requests:
+      memory: 100Mi
+      cpu: 50m
+        
+
+ingress:
+  tlsSecret: dwslibrary-tls
+  #hostLabel: wester-api 
+
+

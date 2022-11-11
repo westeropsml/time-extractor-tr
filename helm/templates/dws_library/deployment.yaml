@@ -1,0 +1,67 @@
+{{- if .Values.dws_library.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.dws_library.app }}
+  namespace: {{ .Values.targetNamespace }}
+spec:
+  replicas: {{ $.Values.dws_library.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.dws_library.app }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.dws_library.app }}
+    spec:
+      containers:
+        - name: {{ .Values.dws_library.app }}
+          image: {{ .Values.dws_library.image }}
+          {{- if and $.Values.dws_library.command }}
+          command: 
+          {{- range $.Values.dws_library.command }}
+           - {{ . }}
+          {{- end }}
+          {{- end }}
+          volumeMounts:
+          {{- if and $.Values.dws_library.volumeMounts }}
+          {{- range $key, $value := .Values.dws_library.volumeMounts }}
+            - name: "{{ $key }}"
+              mountPath: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          #envFrom:
+          #- configMapRef:
+          #    name: {{ .Values.dws_library.configMapName }}
+          env:
+          {{- if .Values.dws_library.env }}
+          {{- range $key, $value := .Values.dws_library.env }}
+            - name: "{{ $key }}"
+              value: "{{ $value }}"
+          {{- end }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.dws_library.resources | nindent 14 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.dws_library.port }}
+              protocol: TCP
+      {{- if and $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range $.Values.global.imagePullSecrets }}
+        - name: {{ . }}
+      {{- end }}
+      {{- end }}
+      {{- if and $.Values.dws_library.volumes }}
+      volumes:
+      {{- range $.Values.dws_library.volumes }}
+        - name: {{ .name }}
+          persistentVolumeClaim:
+            claimName: {{ .persistentVolumeClaim.claimName }}
+      {{- end }}
+      {{- end }}
+      restartPolicy: Always
+{{- end }}
+

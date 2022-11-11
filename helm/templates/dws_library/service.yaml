@@ -1,0 +1,16 @@
+{{- if .Values.dws_library.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.dws_library.app }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: {{ .Values.dws_library.port }}
+    targetPort: {{ .Values.dws_library.port }}
+  selector:
+    app: {{ .Values.dws_library.app }}
+{{- end }}
+
+
